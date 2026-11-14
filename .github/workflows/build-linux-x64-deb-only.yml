@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -60,3 +62,13 @@ jobs:
           name: moonfin-linux-x64-deb
           path: Moonfin_*.deb
           if-no-files-found: error
+
+      # ========== 新增：仅 tag 推送时，上传到 Release ==========
+      - name: Upload deb to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Moonfin_*.deb
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
