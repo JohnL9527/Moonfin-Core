@@ -1,44 +1,36 @@
-name: Build Linux x64 DEB Only (GitHub Actions)
+name: Build Linux x64 Deb Only
 
 on:
-  push:
-    branches: [ main ]
-    tags:
-      - 'v*'
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  build-deb:
+  build:
     runs-on: ubuntu-latest
-    env:
-      CARGO_TARGET_DIR: ./target
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Install system build deps
+      - name: Install build dependencies
         run: |
-          sudo apt update -y
-          sudo apt install -y libgtk-4-dev libadwaita-1-dev libmpdclient-dev build-essential dpkg git
+          sudo apt update
+          sudo apt install -y build-essential dpkg-dev fakeroot
 
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-unknown-linux-gnu
-
-      - name: Cache cargo build artifacts
-        uses: Swatinem/rust-cache@v2
-
-      - name: Run dedicated deb build script
+      - name: Build deb package
         run: |
-          chmod +x ./build-linux-deb.sh
-          ./build-linux-deb.sh
+          set -e
+          REPO_ROOT="$GITHUB_WORKSPACE"
+          ./build-linux-deb.sh deb
 
-      - name: Upload DEB package
+      - name: Show artifacts
+        run: |
+          echo "======================================"
+          echo "Build complete!"
+          echo "Artifacts: $GITHUB_WORKSPACE"
+          ls -lh "$GITHUB_WORKSPACE"/Moonfin_*.deb 2>/dev/null || echo "(no deb built)"
+          echo "======================================"
+
+      - name: Upload deb artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tsukimi-linux-x64-deb
-          path: ./deb_output/*.deb
+          name: Moonfin-x64-deb
+          path: Moonfin_*.deb
